@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Events Monitor</title>
+</head>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: #24292e;
+    text-align: center;
+}
+
+.events-list {
+    margin-top: 20px;
+}
+
+.event {
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #f6f8fa;
+    border-radius: 6px;
+    border-left: 4px solid #0366d6;
+}
+</style>
+<body>
+    <div class="container">
+        <h1>GitHub Events</h1>
+        <div id="events-list" class="events-list">
+            <!-- Events will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        function formatEvent(event) {
+            const date = new Date(event.timestamp);
+            const formattedDate = date.toLocaleString('en-US', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'UTC',
+                timeZoneName: 'short'
+            });
+            
+            switch(event.action) {
+                case 'PUSH':
+                    return `"${event.author}" pushed to "${event.to_branch}" on ${formattedDate}`;
+                case 'PULL_REQUEST':
+                    return `"${event.author}" submitted a pull request from "${event.from_branch}" to "${event.to_branch}" on ${formattedDate}`;
+                case 'MERGE':
+                    return `"${event.author}" merged branch "${event.from_branch}" to "${event.to_branch}" on ${formattedDate}`;
+                default:
+                    return JSON.stringify(event);
+            }
+        }
+
+        function fetchEvents() {
+            fetch('/api/events')
+                .then(response => response.json())
+                .then(events => {
+                    const eventsList = document.getElementById('events-list');
+                    eventsList.innerHTML = '';
+                    
+                    events.forEach(event => {
+                        const eventElement = document.createElement('div');
+                        eventElement.className = 'event';
+                        eventElement.textContent = formatEvent(event);
+                        eventsList.appendChild(eventElement);
+                    });
+                })
+                .catch(error => console.error('Error fetching events:', error));
+        }
+
+        // Fetch events immediately and then every 15 seconds
+        fetchEvents();
+        setInterval(fetchEvents, 15000);
+    </script>
+</body>
+</html>
